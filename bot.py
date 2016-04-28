@@ -3,6 +3,7 @@ import asyncio
 import json
 import urllib.request
 import urllib.parse
+import database_manager as db
 
 client = discord.Client()
 me = None
@@ -35,7 +36,24 @@ def on_message(msg):
            msg_words[1] == "google":
             gs = search(msg.content[(len(msg_words[1]) + len(msg_words[0]) + 1):])
             yield from client.send_message(msg.channel, "Top Google result:\n" + urllib.parse.unquote(gs))
-
+        elif msg_words[1] == "grab":
+            if len(msg_words) < 3:
+                yield from client.send_message(msg.channel, "Please add a username")
+            else:
+                messages = yield from client.logs_from(me.server.default_channel)
+                for m in messages:
+                    if m.author.name == msg_words[2]:
+                        db.add_quote(m.author.name, m.content)
+                        break
+                yield from client.send_message(msg.channel, "Grabbed!")
+        elif msg_words[1] == "quote":
+            num_quotes = 1
+            if len(msg_words) < 3:
+                yield from client.send_message(msg.channel, "Please add a username")
+            else:
+                if len(msg_words) == 4:
+                    num_quotes = msg_words[3]
+                yield from client.send_message(msg.channel, db.get_quote(msg_words[2], num_quotes))
 
 
 @client.async_event
